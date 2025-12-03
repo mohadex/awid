@@ -1,0 +1,37 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+import Index from "./pages/Index"
+import OrderPage from "./pages/OrderPage"
+import TransportPage from "./pages/TransportPage"
+import AuthPage from "./pages/AuthPage"
+import DriverRegistrationPage from "./pages/DriverRegistrationPage"
+import NotFound from "./pages/NotFound"
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/order" element={<OrderPage />} />
+        <Route path="/transport" element={<TransportPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/register" element={<AuthPage />} />
+        <Route path="/driver-registration" element={<DriverRegistrationPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
+export default App
+
+export default App;
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;
