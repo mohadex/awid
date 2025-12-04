@@ -14,7 +14,6 @@ import { supabase } from "@/lib/supabase";
 import bikeDelivery from "@/assets/bike-delivery.jpg";
 import warehouse from "@/assets/warehouse.jpg";
 import luxuryCar from "@/assets/luxury-car.jpg";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Service {
   id: string;
@@ -30,20 +29,7 @@ interface Service {
   tags?: string[];
   icon?: React.ComponentType;
   driverId?: string; // Add driverId to Service interface
-  avatarUrl?: string | null; // Add avatarUrl to Service interface
 }
-
-// Helper function to get initials
-const getInitials = (name: string): string => {
-  if (!name) return '?';
-  const words = name.trim().split(/\s+/);
-  if (words.length >= 2) {
-    return words[0][0].toUpperCase() + words[words.length - 1][0].toUpperCase();
-  } else if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase();
-  }
-  return '?';
-};
 
 const TransportPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,7 +53,7 @@ const TransportPage = () => {
       try {
         const { data: driversData, error } = await supabase
           .from('drivers')
-          .select('*, profiles(avatar_url, full_name)') // Join with profiles table to get avatar_url and full_name
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -92,10 +78,6 @@ const TransportPage = () => {
           phone_number?: string;
           service_description?: string;
           created_at: string;
-          profiles?: {
-            avatar_url?: string;
-            full_name?: string;
-          } | null;
         }
 
         const mappedServices: Service[] = (driversData as DriverData[] || []).map((driver) => {
@@ -107,24 +89,26 @@ const TransportPage = () => {
             return "outline";
           };
 
-          // Select default image based on vehicle type, or use avatar_url if available
-          const avatarUrl = driver.profiles?.avatar_url || null;
-          const driverFullName = driver.profiles?.full_name || driver.full_name || 'خدمة النقل';
+          // Select default image based on vehicle type
+          const getDefaultImage = (type: string): string => {
+            if (type.includes('تاكسي')) return luxuryCar;
+            if (type.includes('بيكوب') || type.includes('كاميو') || type.includes('تريبورتور')) return warehouse;
+            return bikeDelivery;
+          };
 
           return {
             id: driver.id.toString(),
-            title: driverFullName,
+            title: driver.full_name || 'خدمة النقل',
             location: driver.location || 'بيوكرى',
             badge: driver.vehicle_type || 'مركبة',
             badgeVariant: getBadgeVariant(driver.vehicle_type || ''),
             rating: driver.rating || 0,
             reviews: 0, // reviews column doesn't exist in table, keeping for UI compatibility
-            image: driver.vehicle_photo || bikeDelivery, // Fallback to bikeDelivery if no vehicle_photo (will be replaced by avatar)
+            image: driver.vehicle_photo || getDefaultImage(driver.vehicle_type || ''),
             whatsapp: driver.phone_number || '+212600000000',
             description: driver.service_description || 'خدمة نقل موثوقة وسريعة',
             tags: [driver.vehicle_type || 'نقل'].filter(Boolean),
             driverId: driver.id.toString(), // Ensure driverId is set
-            avatarUrl: avatarUrl,
           };
         });
 
@@ -311,58 +295,54 @@ const TransportPage = () => {
               {filteredServices.map((service) => (
                 <div
                   key={service.id}
-                  className="bg-card rounded-xl overflow-hidden border border-border shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  className="bg-card rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300"
                 >
-                  <div className="relative h-48 flex items-center justify-center bg-gray-100 overflow-hidden group">
-                    {service.avatarUrl ? (
-                      <Avatar className="h-full w-full rounded-none">
-                        <AvatarImage src={service.avatarUrl} alt={service.title} className="object-cover" />
-                        <AvatarFallback className="text-6xl font-bold bg-primary/20 text-primary">{getInitials(service.title)}</AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <Avatar className="h-full w-full rounded-none">
-                        <AvatarFallback className="text-6xl font-bold bg-primary/20 text-primary">{getInitials(service.title)}</AvatarFallback>
-                      </Avatar>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent group-hover:from-black/70 transition-all duration-300"></div>
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={service.image}
+                      alt={service.title}
+                      className="w-full h-full object-cover"
+                    />
                     <Badge
                       variant={service.badgeVariant}
-                      className="absolute top-3 left-3 text-sm font-semibold py-1 px-3 rounded-full z-10"
+                      className="absolute top-3 left-3"
                     >
                       {service.badge}
                     </Badge>
                   </div>
 
                   <div className="p-5">
-                    <h3 className="font-bold text-xl mb-1 text-gray-900">{service.title}</h3>
+                    <h3 className="font-bold text-lg mb-2">{service.title}</h3>
 
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                      <MapPin className="h-4 w-4 text-gray-500" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                      <MapPin className="h-4 w-4" />
                       <span>{service.location}</span>
                     </div>
 
-                    <div className="flex items-center gap-1 mb-4">
-                      <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                      <span className="font-bold text-base text-gray-800">{service.rating.toFixed(1)}</span>
-                      <span className="text-sm text-gray-500">({service.reviews} تقييم)</span>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-bold text-sm">{service.rating}</span>
+                        <span className="text-sm text-muted-foreground">({service.reviews} تقييم)</span>
+                      </div>
                     </div>
 
-                    <div className="flex flex-col gap-3 mt-4">
+                    <div className="flex gap-2">
                       <Button
-                        size="lg"
-                        className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                        size="sm"
+                        className="flex-1 h-9"
                         onClick={() => handlePhoneCall(service.whatsapp)}
                       >
-                        <Phone className="h-5 w-5 ml-2" />
+                        <Phone className="h-4 w-4 ml-1" />
                         اتصال
                       </Button>
                       <Button
-                        size="lg"
+                        size="sm"
                         variant="outline"
-                        className="w-full h-11 border-2 border-primary/20 text-primary hover:bg-primary/5 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all"
+                        className="flex-1 h-9"
                         onClick={() => handleWhatsAppRedirect(service.whatsapp, service.title)}
                       >
-                        <MessageCircle className="h-5 w-5 ml-2" />
+                        <MessageCircle className="h-4 w-4 ml-1" />
                         رسالة
                       </Button>
                       <RatingModal
@@ -370,6 +350,9 @@ const TransportPage = () => {
                         driverId={service.id}
                         onRatingSubmit={(rating, comment) => handleRatingSubmit(service.title, rating, comment)}
                       />
+                    </div>
+
+                    <div className="mt-3">
                       <ServiceDetailsModal
                         service={{
                           title: service.title,
