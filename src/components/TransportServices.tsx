@@ -4,32 +4,18 @@ import taxiIllustration from "@/assets/Taxi illustration.png";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import WhyWeCreatedThis from "./WhyWeCreatedThis";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"; // New import
-import { User } from "lucide-react"; // New import
 
-interface Service {
-  id: string;
-  title: string;
-  location: string;
-  badge: string;
-  badgeVariant: "default" | "secondary" | "destructive" | "outline";
-  rating: number;
-  reviews: number;
-  image: string;
-  whatsapp: string;
-  description?: string;
-  tags?: string[];
-  icon?: React.ComponentType;
-  avatarUrl?: string | null;
-  fullName?: string;
-}
+const services = [
+  "تاكسي صغير",
+  "تاكسي كبير",
+  "تريبورتور",
+  "هوندا",
+  "كاميو",
+  "ميني بيس",
+  "بيكوب"
+];
 
-interface TransportServicesProps {
-  services: Service[];
-  getInitials: (name: string) => string;
-}
-
-const TransportServices = ({ services, getInitials }: TransportServicesProps) => {
+const TransportServices = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -92,30 +78,21 @@ const TransportServices = ({ services, getInitials }: TransportServicesProps) =>
             <div className="flex gap-4 md:gap-6 px-4 md:px-16 w-max mx-auto">
               {services.map((service, index) => (
                 <div
-                  key={service.id}
+                  key={index}
                   className="flex-shrink-0 bg-gradient-to-br from-primary via-primary to-[#d94a3a] border-2 border-primary/50 hover:border-white shadow-xl hover:shadow-2xl rounded-2xl p-5 md:p-6 flex flex-col items-center justify-center w-36 h-36 md:w-44 md:h-44 transition-all duration-300 hover:-translate-y-2 hover:scale-105 cursor-pointer group relative overflow-hidden animate-bounce-in"
                   style={{ animationDelay: `${0.4 + index * 0.1}s` }}
                 >
                   {/* Decorative gradient overlay on hover */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
-                  {/* Profile Image/Avatar */}
-                  <div className="relative z-10 mb-2">
-                    <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-white shadow-lg">
-                      {service.avatarUrl ? (
-                        <AvatarImage src={service.avatarUrl} alt={service.fullName || service.title} />
-                      ) : (
-                        <AvatarFallback className="bg-primary/20 text-white text-xl md:text-2xl font-bold flex items-center justify-center">
-                          {service.fullName ? getInitials(service.fullName) : <User className="w-8 h-8 md:w-10 md:h-10 text-white" />}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                  </div>
+                  {/* Decorative pattern */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-white/5 rounded-bl-full"></div>
+                  <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-tr-full"></div>
                   
                   {/* Content */}
                   <div className="relative z-10 text-center">
                     <p className="text-white text-center font-bold text-base md:text-lg leading-tight drop-shadow-lg">
-                      {service.title}
+                      {service}
                     </p>
                     <div className="mt-3 w-12 h-0.5 bg-white/30 mx-auto rounded-full group-hover:bg-white/60 transition-colors"></div>
                   </div>
@@ -139,9 +116,9 @@ const TransportServices = ({ services, getInitials }: TransportServicesProps) =>
 
         {/* Mobile Navigation Dots */}
         <div className="flex justify-center gap-2 mb-8 md:hidden">
-          {services.map((service, index) => (
+          {services.map((_, index) => (
             <div
-              key={service.id}
+              key={index}
               className="w-2 h-2 rounded-full bg-primary/30"
             />
           ))}
