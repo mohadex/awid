@@ -353,7 +353,7 @@ const TransportPage = () => {
                     </div>
                     
                     <div className="mt-3">
-                      <ServiceDetailsModal 
+                      <ServiceDetailsModal
                         service={{
                           title: service.title,
                           description: service.description || "خدمة موثوقة وعالية الجودة",
@@ -364,8 +364,8 @@ const TransportPage = () => {
                           badgeColor: "bg-primary",
                           whatsapp: service.whatsapp,
                           icon: MapPin,
-                          driverId: service.id, // Fixed: Include driverId here
                         }}
+                        driverId={service.id} // Pass driverId as a separate prop
                         comments={serviceComments[service.title] || []}
                         onAddComment={(rating, comment) => handleAddComment(service.title, rating, comment)}
                       />
