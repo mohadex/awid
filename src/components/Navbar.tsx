@@ -158,69 +158,92 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu - Drawer Overlay and Content */}
           {isMenuOpen && (
-            <div className="md:hidden mt-3 pb-3 px-2">
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              onClick={closeMenu}
+              aria-hidden="true"
+            ></div>
+          )}
+
+          <div 
+            className={`fixed top-0 right-0 w-64 md:hidden bg-primary text-primary-foreground h-full z-50 transform 
+              ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-300 ease-in-out`}
+          >
+            <div className="flex justify-between items-center p-4 border-b border-primary-foreground/20">
+              <span className="text-lg font-bold">القائمة</span>
+              <button onClick={closeMenu} className="text-white focus:outline-none" aria-label="إغلاق القائمة">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="py-4 px-2 space-y-1">
               <Link to="/" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium" onClick={() => { closeMenu(); scrollToTop(); }}>
                 الرئيسية
               </Link>
-              <button type="button" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium" onClick={() => { closeMenu(); if (!goToTitle('الخدمات')) { navigate('/'); scrollToTop(); } }}>
+              <button type="button" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium text-right" onClick={() => { closeMenu(); if (!goToTitle('الخدمات')) { navigate('/'); scrollToTop(); } }}>
                 خدمات
               </button>
-              {user ? (
-                <>
-                  <button 
-                    onClick={handleDriverJoinClick}
-                    className="w-full text-right block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium flex items-center"
-                  >
-                    <UserPlus className="h-4 w-4 ml-2.5" />
-                    <span>انضم كسائق</span>
-                  </button>
-                  <Link to="/profile" className="flex items-center gap-2 py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium" onClick={closeMenu}>
-                    <User className="h-4 w-4" />
-                    <span>{user.name}</span>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link to="/auth" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium" onClick={closeMenu}>
-                    تسجيل الدخول
-                  </Link>
-                  <button 
-                    onClick={handleDriverJoinClick}
-                    className="w-full text-right block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium"
-                  >
-                    انضم كسائق
-                  </button>
-                </>
-              )}
-              <Link to="/transport" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium" onClick={() => { closeMenu(); scrollToTop(); }}>
+              <Link to="/transport" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium text-right" onClick={() => { closeMenu(); scrollToTop(); }}>
                 وسائل النقل
               </Link>
-              <Link to="/restaurants" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium" onClick={() => { closeMenu(); scrollToTop(); }}>
+              <Link to="/restaurants" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium text-right" onClick={() => { closeMenu(); scrollToTop(); }}>
                 المطاعم
               </Link>
-              <Link to="/about" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium" onClick={() => { closeMenu(); scrollToTop(); }}>
+              <Link to="/about" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium text-right" onClick={() => { closeMenu(); scrollToTop(); }}>
                 من نحن
               </Link>
-              <button type="button" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium" onClick={() => { closeMenu(); if (!goToTitle('اتصل بنا')) { navigate('/'); scrollToTop(); } }}>
+              <button type="button" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md text-sm font-medium text-right" onClick={() => { closeMenu(); if (!goToTitle('اتصل بنا')) { navigate('/'); scrollToTop(); } }}>
                 اتصل بنا
               </button>
-              <div className="mt-3 pt-3 border-t border-primary-foreground/20 space-y-1">
-                <Link to="/login" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md flex items-center text-sm font-medium" onClick={closeMenu}>
-                  <User className="h-4 w-4 ml-2.5" />
-                  <span>تسجيل الدخول</span>
-                </Link>
-                <button 
-                  onClick={handleDriverJoinClick}
-                  className="w-full text-right block py-2.5 hover:bg-primary/80 px-3 rounded-md flex items-center text-sm font-medium"
-                >
-                  <UserPlus className="h-4 w-4 ml-2.5" />
-                  <span>انضم كسائق</span>
-                </button>
-              </div>
+
+              {user ? (
+                <div className="mt-3 pt-3 border-t border-primary-foreground/20 space-y-1">
+                  <Link to="/profile" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md flex items-center justify-end text-sm font-medium" onClick={closeMenu}>
+                    <span className="ml-2.5">{user.name}</span>
+                    <User className="h-4 w-4" />
+                  </Link>
+                  <button 
+                    onClick={handleDriverJoinClick}
+                    className="w-full text-right block py-2.5 hover:bg-primary/80 px-3 rounded-md flex items-center justify-end text-sm font-medium"
+                  >
+                    <span className="ml-2.5">انضم كسائق</span>
+                    <UserPlus className="h-4 w-4" />
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      closeMenu();
+                      navigate("/");
+                      toast({
+                        title: "تم تسجيل الخروج بنجاح",
+                        description: "لقد تم تسجيل خروجك من حسابك.",
+                      });
+                    }}
+                    className="w-full text-right block py-2.5 hover:bg-primary/80 px-3 rounded-md flex items-center justify-end text-sm font-medium"
+                  >
+                    <span className="ml-2.5">تسجيل الخروج</span>
+                    <User className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-3 pt-3 border-t border-primary-foreground/20 space-y-1">
+                  <Link to="/auth" className="block py-2.5 hover:bg-primary/80 px-3 rounded-md flex items-center justify-end text-sm font-medium" onClick={closeMenu}>
+                    <span className="ml-2.5">تسجيل الدخول</span>
+                    <User className="h-4 w-4" />
+                  </Link>
+                  <button 
+                    onClick={handleDriverJoinClick}
+                    className="w-full text-right block py-2.5 hover:bg-primary/80 px-3 rounded-md flex items-center justify-end text-sm font-medium"
+                  >
+                    <span className="ml-2.5">انضم كسائق</span>
+                    <UserPlus className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
         </div>
       </nav>
     </>
