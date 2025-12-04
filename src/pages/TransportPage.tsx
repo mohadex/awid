@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import bikeDelivery from "@/assets/bike-delivery.jpg";
 import warehouse from "@/assets/warehouse.jpg";
 import luxuryCar from "@/assets/luxury-car.jpg";
+import TransportServices from "@/components/TransportServices";
 
 interface Service {
   id: string;
@@ -168,6 +169,13 @@ const TransportPage = () => {
     return matchesSearch && matchesFilter;
   });
 
+  const getInitials = (name: string) => {
+    if (!name) return "";
+    const names = name.split(" ");
+    if (names.length === 1) return names[0][0];
+    return `${names[0][0]}${names[1][0]}`;
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -289,95 +297,7 @@ const TransportPage = () => {
                 <p className="text-muted-foreground text-lg">جاري التحميل...</p>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredServices.map((service) => (
-                <div 
-                  key={service.id}
-                  className="bg-card rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300"
-                >
-                  <div className="relative h-48 overflow-hidden">
-                    <img 
-                      src={service.image} 
-                      alt={service.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <Badge 
-                      variant={service.badgeVariant}
-                      className="absolute top-3 left-3"
-                    >
-                      {service.badge}
-                    </Badge>
-                  </div>
-                  
-                  <div className="p-5">
-                    <h3 className="font-bold text-lg mb-2">{service.title}</h3>
-                    
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                      <MapPin className="h-4 w-4" />
-                      <span>{service.location}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-bold text-sm">{service.rating}</span>
-                        <span className="text-sm text-muted-foreground">({service.reviews} تقييم)</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        className="flex-1 h-9"
-                        onClick={() => handlePhoneCall(service.whatsapp)}
-                      >
-                        <Phone className="h-4 w-4 ml-1" />
-                        اتصال
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="flex-1 h-9"
-                        onClick={() => handleWhatsAppRedirect(service.whatsapp, service.title)}
-                      >
-                        <MessageCircle className="h-4 w-4 ml-1" />
-                        رسالة
-                      </Button>
-                      <RatingModal 
-                        serviceTitle={service.title}
-                        onRatingSubmit={(rating, comment) => handleRatingSubmit(service.title, rating, comment)}
-                      />
-                    </div>
-                    
-                    <div className="mt-3">
-                      <ServiceDetailsModal 
-                        service={{
-                          title: service.title,
-                          description: service.description || "خدمة موثوقة وعالية الجودة",
-                          rating: service.rating,
-                          reviews: service.reviews,
-                          tags: service.tags || [],
-                          badge: service.badge,
-                          badgeColor: "bg-primary",
-                          whatsapp: service.whatsapp,
-                          icon: MapPin
-                        }}
-                        comments={serviceComments[service.title] || []}
-                        onAddComment={(rating, comment) => handleAddComment(service.title, rating, comment)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-            {filteredServices.length === 0 && !isLoading && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">
-                  لا توجد خدمات متاحة تطابق بحثك
-                </p>
-              </div>
-            )}
-            </div>
+              <TransportServices services={filteredServices} getInitials={getInitials} />
             )}
           </div>
         </section>
