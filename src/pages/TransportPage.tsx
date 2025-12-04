@@ -293,66 +293,62 @@ const TransportPage = () => {
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredServices.map((service) => (
-                <div 
+                <div
                   key={service.id}
-                  className="bg-card rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300"
+                  className="bg-card rounded-xl overflow-hidden border border-border shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
-                  <div className="relative h-48 overflow-hidden">
-                    <img 
-                      src={service.image} 
+                  <div className="relative h-48 overflow-hidden group">
+                    <img
+                      src={service.image}
                       alt={service.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
                     />
-                    <Badge 
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent group-hover:from-black/70 transition-all duration-300"></div>
+                    <Badge
                       variant={service.badgeVariant}
-                      className="absolute top-3 left-3"
+                      className="absolute top-3 left-3 text-sm font-semibold py-1 px-3 rounded-full"
                     >
                       {service.badge}
                     </Badge>
                   </div>
-                  
+
                   <div className="p-5">
-                    <h3 className="font-bold text-lg mb-2">{service.title}</h3>
-                    
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                      <MapPin className="h-4 w-4" />
+                    <h3 className="font-bold text-xl mb-1 text-gray-900">{service.title}</h3>
+
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                      <MapPin className="h-4 w-4 text-gray-500" />
                       <span>{service.location}</span>
                     </div>
-                    
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-bold text-sm">{service.rating}</span>
-                        <span className="text-sm text-muted-foreground">({service.reviews} تقييم)</span>
-                      </div>
+
+                    <div className="flex items-center gap-1 mb-4">
+                      <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                      <span className="font-bold text-base text-gray-800">{service.rating.toFixed(1)}</span>
+                      <span className="text-sm text-gray-500">({service.reviews} تقييم)</span>
                     </div>
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        className="flex-1 h-9"
+
+                    <div className="flex flex-col gap-3 mt-4">
+                      <Button
+                        size="lg"
+                        className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                         onClick={() => handlePhoneCall(service.whatsapp)}
                       >
-                        <Phone className="h-4 w-4 ml-1" />
+                        <Phone className="h-5 w-5 ml-2" />
                         اتصال
                       </Button>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="lg"
                         variant="outline"
-                        className="flex-1 h-9"
+                        className="w-full h-11 border-2 border-primary/20 text-primary hover:bg-primary/5 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all"
                         onClick={() => handleWhatsAppRedirect(service.whatsapp, service.title)}
                       >
-                        <MessageCircle className="h-4 w-4 ml-1" />
+                        <MessageCircle className="h-5 w-5 ml-2" />
                         رسالة
                       </Button>
-                      <RatingModal 
+                      <RatingModal
                         serviceTitle={service.title}
-                        driverId={service.id} // Fixed: Use service.id for driverId
+                        driverId={service.id}
                         onRatingSubmit={(rating, comment) => handleRatingSubmit(service.title, rating, comment)}
                       />
-                    </div>
-                    
-                    <div className="mt-3">
                       <ServiceDetailsModal
                         service={{
                           title: service.title,
@@ -365,7 +361,7 @@ const TransportPage = () => {
                           whatsapp: service.whatsapp,
                           icon: MapPin,
                         }}
-                        driverId={service.id} // Pass driverId as a separate prop
+                        driverId={service.id}
                         comments={serviceComments[service.title] || []}
                         onAddComment={(rating, comment) => handleAddComment(service.title, rating, comment)}
                       />
