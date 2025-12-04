@@ -3,15 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, MessageCircle, Star, MapPin, Search, User } from "lucide-react";
+import { Phone, MessageCircle, Star, MapPin, Search } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FloatingButtons from "@/components/FloatingButtons";
 import RatingModal from "@/components/RatingModal";
 import ServiceDetailsModal from "@/components/ServiceDetailsModal";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import bikeDelivery from "@/assets/bike-delivery.jpg";
+import warehouse from "@/assets/warehouse.jpg";
+import luxuryCar from "@/assets/luxury-car.jpg";
 
 interface Service {
   id: string;
@@ -26,21 +28,7 @@ interface Service {
   description?: string;
   tags?: string[];
   icon?: React.ComponentType;
-  avatarUrl?: string | null;
-  fullName?: string;
 }
-
-// Helper function to get initials from Arabic name
-const getInitials = (name: string): string => {
-  if (!name) return '?';
-  const words = name.trim().split(/\s+/);
-  if (words.length >= 2) {
-    return words[0][0] + words[words.length - 1][0];
-  } else if (words.length === 1) {
-    return words[0].substring(0, 2);
-  }
-  return '?';
-};
 
 const TransportPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,14 +37,13 @@ const TransportPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // State to store comments for each service (keyed by driver ID)
+  // State to store comments for each service
   const [serviceComments, setServiceComments] = useState<{[key: string]: Array<{
     id: string;
     rating: number;
     comment: string;
     date: string;
     userName: string;
-    userAvatar?: string | null;
   }>}>({});
 
   // Fetch drivers from database
@@ -79,33 +66,9 @@ const TransportPage = () => {
           return;
         }
 
-        // Fetch profiles for avatars
-        const userIds = (driversData || []).map((d: any) => d.user_id).filter(Boolean);
-        let profilesMap: Record<string, { avatar_url: string | null; full_name: string | null }> = {};
-        
-        if (userIds.length > 0) {
-          const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('user_id, avatar_url, full_name')
-            .in('user_id', userIds);
-          
-          if (profilesError) {
-            console.warn('Error fetching profiles:', profilesError);
-          } else if (profilesData) {
-            profilesMap = profilesData.reduce((acc, profile) => {
-              acc[profile.user_id] = {
-                avatar_url: profile.avatar_url,
-                full_name: profile.full_name
-              };
-              return acc;
-            }, {} as Record<string, { avatar_url: string | null; full_name: string | null }>);
-          }
-        }
-
         // Map drivers data to Service interface
         interface DriverData {
           id: number;
-          user_id?: string;
           full_name?: string;
           location?: string;
           vehicle_type?: string;
@@ -116,70 +79,6 @@ const TransportPage = () => {
           created_at: string;
         }
         
-        // Fetch reviews for all drivers
-        const driverIds = (driversData || []).map((d: any) => d.id);
-        let reviewsMap: Record<string, Array<{
-          id: string;
-          rating: number;
-          comment: string;
-          date: string;
-          userName: string;
-          userAvatar?: string | null;
-        }>> = {};
-
-        if (driverIds.length > 0) {
-          // Fetch reviews
-          const { data: reviewsData, error: reviewsError } = await supabase
-            .from('driver_reviews')
-            .select('id, driver_id, rating, comment, created_at, user_id')
-            .in('driver_id', driverIds)
-            .order('created_at', { ascending: false });
-
-          if (reviewsError) {
-            console.warn('Error fetching reviews:', reviewsError);
-          } else if (reviewsData && reviewsData.length > 0) {
-            // Get unique user IDs from reviews
-            const reviewUserIds = [...new Set(reviewsData.map((r: any) => r.user_id).filter(Boolean))];
-            
-            // Fetch profiles for review users
-            let reviewProfilesMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
-            if (reviewUserIds.length > 0) {
-              const { data: reviewProfiles } = await supabase
-                .from('profiles')
-                .select('user_id, full_name, avatar_url')
-                .in('user_id', reviewUserIds);
-              
-              if (reviewProfiles) {
-                reviewProfilesMap = reviewProfiles.reduce((acc, profile) => {
-                  acc[profile.user_id] = {
-                    full_name: profile.full_name,
-                    avatar_url: profile.avatar_url
-                  };
-                  return acc;
-                }, {} as Record<string, { full_name: string | null; avatar_url: string | null }>);
-              }
-            }
-
-            // Group reviews by driver_id
-            reviewsMap = reviewsData.reduce((acc, review: any) => {
-              const driverId = review.driver_id.toString();
-              if (!acc[driverId]) {
-                acc[driverId] = [];
-              }
-              const profile = reviewProfilesMap[review.user_id] || {};
-              acc[driverId].push({
-                id: review.id.toString(),
-                rating: review.rating || 0,
-                comment: review.comment || '',
-                date: review.created_at,
-                userName: profile.full_name || 'مستخدم',
-                userAvatar: profile.avatar_url || null
-              });
-              return acc;
-            }, {} as Record<string, Array<any>>);
-          }
-        }
-
         const mappedServices: Service[] = (driversData as DriverData[] || []).map((driver) => {
           // Determine badge variant based on vehicle type
           const getBadgeVariant = (type: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -189,38 +88,29 @@ const TransportPage = () => {
             return "outline";
           };
 
-          const profile = driver.user_id ? profilesMap[driver.user_id] : null;
-          const driverName = driver.full_name || profile?.full_name || 'خدمة النقل';
-          const avatarUrl = profile?.avatar_url || null;
-          const driverReviews = reviewsMap[driver.id.toString()] || [];
-          const reviewCount = driverReviews.length;
-          
-          // Calculate average rating from reviews if available
-          let calculatedRating = driver.rating || 0;
-          if (driverReviews.length > 0) {
-            const avgRating = driverReviews.reduce((sum, r) => sum + r.rating, 0) / driverReviews.length;
-            calculatedRating = Math.round(avgRating * 100) / 100;
-          }
+          // Select default image based on vehicle type
+          const getDefaultImage = (type: string): string => {
+            if (type.includes('تاكسي')) return luxuryCar;
+            if (type.includes('بيكوب') || type.includes('كاميو') || type.includes('تريبورتور')) return warehouse;
+            return bikeDelivery;
+          };
 
           return {
             id: driver.id.toString(),
-            title: driverName,
+            title: driver.full_name || 'خدمة النقل',
             location: driver.location || 'بيوكرى',
             badge: driver.vehicle_type || 'مركبة',
             badgeVariant: getBadgeVariant(driver.vehicle_type || ''),
-            rating: calculatedRating,
-            reviews: reviewCount,
-            image: '', // No longer using images
+            rating: driver.rating || 0,
+            reviews: 0, // reviews column doesn't exist in table, keeping for UI compatibility
+            image: driver.vehicle_photo || getDefaultImage(driver.vehicle_type || ''),
             whatsapp: driver.phone_number || '+212600000000',
             description: driver.service_description || 'خدمة نقل موثوقة وسريعة',
-            tags: [driver.vehicle_type || 'نقل'].filter(Boolean),
-            avatarUrl: avatarUrl,
-            fullName: driverName
+            tags: [driver.vehicle_type || 'نقل'].filter(Boolean)
           };
         });
 
         setServices(mappedServices);
-        setServiceComments(reviewsMap);
       } catch (error) {
         console.error('Unexpected error:', error);
         toast({
@@ -246,62 +136,28 @@ const TransportPage = () => {
     window.open(`tel:${phoneNumber}`, '_self');
   };
 
-  const handleRatingSubmit = async (driverId: string, rating: number, comment: string) => {
-    // This is called after RatingModal saves to database
-    // Reload reviews for this driver
-    try {
-      const { data: reviewsData } = await supabase
-        .from('driver_reviews')
-        .select('id, rating, comment, created_at, user_id')
-        .eq('driver_id', parseInt(driverId))
-        .order('created_at', { ascending: false });
+  const handleRatingSubmit = (serviceTitle: string, rating: number, comment: string) => {
+    const newComment = {
+      id: Date.now().toString(),
+      rating,
+      comment,
+      date: new Date().toISOString(),
+      userName: "مستخدم" // In a real app, this would be the logged-in user's name
+    };
 
-      if (reviewsData && reviewsData.length > 0) {
-        const reviewUserIds = [...new Set(reviewsData.map((r: any) => r.user_id).filter(Boolean))];
-        
-        // Fetch profiles
-        let reviewProfilesMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
-        if (reviewUserIds.length > 0) {
-          const { data: reviewProfiles } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url')
-            .in('user_id', reviewUserIds);
-          
-          if (reviewProfiles) {
-            reviewProfilesMap = reviewProfiles.reduce((acc, profile) => {
-              acc[profile.user_id] = {
-                full_name: profile.full_name,
-                avatar_url: profile.avatar_url
-              };
-              return acc;
-            }, {} as Record<string, { full_name: string | null; avatar_url: string | null }>);
-          }
-        }
+    setServiceComments(prev => ({
+      ...prev,
+      [serviceTitle]: [...(prev[serviceTitle] || []), newComment]
+    }));
 
-        const reviews = reviewsData.map((review: any) => {
-          const profile = reviewProfilesMap[review.user_id] || {};
-          return {
-            id: review.id.toString(),
-            rating: review.rating || 0,
-            comment: review.comment || '',
-            date: review.created_at,
-            userName: profile.full_name || 'مستخدم',
-            userAvatar: profile.avatar_url || null
-          };
-        });
-
-        setServiceComments(prev => ({
-          ...prev,
-          [driverId]: reviews
-        }));
-      }
-    } catch (error) {
-      console.error('Error reloading reviews:', error);
-    }
+    toast({
+      title: "شكراً لك!",
+      description: "تم إرسال تقييمك بنجاح"
+    });
   };
 
-  const handleAddComment = (driverId: string, rating: number, comment: string) => {
-    handleRatingSubmit(driverId, rating, comment);
+  const handleAddComment = (serviceTitle: string, rating: number, comment: string) => {
+    handleRatingSubmit(serviceTitle, rating, comment);
   };
 
   const filteredServices = services.filter(service => {
@@ -437,33 +293,20 @@ const TransportPage = () => {
               {filteredServices.map((service) => (
                 <div 
                   key={service.id}
-                  className="bg-white rounded-2xl overflow-hidden border-2 border-gray-100 hover:border-primary/50 hover:shadow-2xl transition-all duration-300"
+                  className="bg-card rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300"
                 >
-                  <div className="relative h-48 bg-white overflow-hidden flex items-center justify-center border-b-2 border-gray-100">
-                    {/* Profile Avatar */}
-                    <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-primary/20 shadow-lg z-10">
-                      {service.avatarUrl ? (
-                        <AvatarImage src={service.avatarUrl} alt={service.fullName || service.title} />
-                      ) : (
-                        <AvatarFallback className="bg-primary/10 text-primary text-2xl md:text-3xl font-bold">
-                          {service.fullName ? getInitials(service.fullName) : <User className="w-8 h-8 md:w-10 md:h-10 text-primary" />}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    
-                    {/* Badge */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={service.image} 
+                      alt={service.title}
+                      className="w-full h-full object-cover"
+                    />
                     <Badge 
                       variant={service.badgeVariant}
-                      className="absolute top-4 left-4 bg-primary text-white border-none shadow-md font-semibold z-10"
+                      className="absolute top-3 left-3"
                     >
                       {service.badge}
                     </Badge>
-                    
-                    {/* Rating Badge */}
-                    <div className="absolute top-4 right-4 bg-white rounded-full px-3 py-1.5 flex items-center gap-1 shadow-md z-10 border border-gray-200">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-bold text-sm text-gray-900">{service.rating || 0}</span>
-                    </div>
                   </div>
                   
                   <div className="p-5">
@@ -502,8 +345,7 @@ const TransportPage = () => {
                       </Button>
                       <RatingModal 
                         serviceTitle={service.title}
-                        driverId={service.id}
-                        onRatingSubmit={(rating, comment) => handleRatingSubmit(service.id, rating, comment)}
+                        onRatingSubmit={(rating, comment) => handleRatingSubmit(service.title, rating, comment)}
                       />
                     </div>
                     
@@ -520,9 +362,8 @@ const TransportPage = () => {
                           whatsapp: service.whatsapp,
                           icon: MapPin
                         }}
-                        driverId={service.id}
-                        comments={serviceComments[service.id] || []}
-                        onAddComment={(rating, comment) => handleAddComment(service.id, rating, comment)}
+                        comments={serviceComments[service.title] || []}
+                        onAddComment={(rating, comment) => handleAddComment(service.title, rating, comment)}
                       />
                     </div>
                   </div>
