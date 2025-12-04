@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import bikeDelivery from "@/assets/bike-delivery.jpg";
 import warehouse from "@/assets/warehouse.jpg";
 import luxuryCar from "@/assets/luxury-car.jpg";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Service {
   id: string;
@@ -29,7 +30,20 @@ interface Service {
   tags?: string[];
   icon?: React.ComponentType;
   driverId?: string; // Add driverId to Service interface
+  avatarUrl?: string | null; // Add avatarUrl to Service interface
 }
+
+// Helper function to get initials
+const getInitials = (name: string): string => {
+  if (!name) return '?';
+  const words = name.trim().split(/\s+/);
+  if (words.length >= 2) {
+    return words[0][0].toUpperCase() + words[words.length - 1][0].toUpperCase();
+  } else if (words.length === 1) {
+    return words[0].substring(0, 2).toUpperCase();
+  }
+  return '?';
+};
 
 const TransportPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,7 +67,7 @@ const TransportPage = () => {
       try {
         const { data: driversData, error } = await supabase
           .from('drivers')
-          .select('*')
+          .select('*, profiles(avatar_url, full_name)') // Join with profiles table to get avatar_url and full_name
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -78,8 +92,12 @@ const TransportPage = () => {
           phone_number?: string;
           service_description?: string;
           created_at: string;
+          profiles?: {
+            avatar_url?: string;
+            full_name?: string;
+          } | null;
         }
-        
+
         const mappedServices: Service[] = (driversData as DriverData[] || []).map((driver) => {
           // Determine badge variant based on vehicle type
           const getBadgeVariant = (type: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -89,26 +107,24 @@ const TransportPage = () => {
             return "outline";
           };
 
-          // Select default image based on vehicle type
-          const getDefaultImage = (type: string): string => {
-            if (type.includes('تاكسي')) return luxuryCar;
-            if (type.includes('بيكوب') || type.includes('كاميو') || type.includes('تريبورتور')) return warehouse;
-            return bikeDelivery;
-          };
+          // Select default image based on vehicle type, or use avatar_url if available
+          const avatarUrl = driver.profiles?.avatar_url || null;
+          const driverFullName = driver.profiles?.full_name || driver.full_name || 'خدمة النقل';
 
           return {
             id: driver.id.toString(),
-            title: driver.full_name || 'خدمة النقل',
+            title: driverFullName,
             location: driver.location || 'بيوكرى',
             badge: driver.vehicle_type || 'مركبة',
             badgeVariant: getBadgeVariant(driver.vehicle_type || ''),
             rating: driver.rating || 0,
             reviews: 0, // reviews column doesn't exist in table, keeping for UI compatibility
-            image: driver.vehicle_photo || getDefaultImage(driver.vehicle_type || ''),
+            image: driver.vehicle_photo || bikeDelivery, // Fallback to bikeDelivery if no vehicle_photo (will be replaced by avatar)
             whatsapp: driver.phone_number || '+212600000000',
             description: driver.service_description || 'خدمة نقل موثوقة وسريعة',
             tags: [driver.vehicle_type || 'نقل'].filter(Boolean),
             driverId: driver.id.toString(), // Ensure driverId is set
+            avatarUrl: avatarUrl,
           };
         });
 
@@ -297,16 +313,21 @@ const TransportPage = () => {
                   key={service.id}
                   className="bg-card rounded-xl overflow-hidden border border-border shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
-                  <div className="relative h-48 overflow-hidden group">
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-                    />
+                  <div className="relative h-48 flex items-center justify-center bg-gray-100 overflow-hidden group">
+                    {service.avatarUrl ? (
+                      <Avatar className="h-full w-full rounded-none">
+                        <AvatarImage src={service.avatarUrl} alt={service.title} className="object-cover" />
+                        <AvatarFallback className="text-6xl font-bold bg-primary/20 text-primary">{getInitials(service.title)}</AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <Avatar className="h-full w-full rounded-none">
+                        <AvatarFallback className="text-6xl font-bold bg-primary/20 text-primary">{getInitials(service.title)}</AvatarFallback>
+                      </Avatar>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent group-hover:from-black/70 transition-all duration-300"></div>
                     <Badge
                       variant={service.badgeVariant}
-                      className="absolute top-3 left-3 text-sm font-semibold py-1 px-3 rounded-full"
+                      className="absolute top-3 left-3 text-sm font-semibold py-1 px-3 rounded-full z-10"
                     >
                       {service.badge}
                     </Badge>
